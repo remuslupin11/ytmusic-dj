@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>YouTube Music DJ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap');
+
+  :root {
+    --bg:        #0f0e0c;
+    --bg2:       #1a1815;
+    --bg3:       #242220;
+    --amber:     #e8a020;
+    --amber-dim: #7a5510;
+    --cream:     #d4c9a8;
+    --muted:     #6b6458;
+    --border:    #2e2b25;
+    --red:       #c0392b;
+    --green:     #27ae60;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 320px;
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    user-select: none;
+  }
+
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(232,160,32,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--amber);
+    letter-spacing: 0.02em;
+  }
+  .logo span { color: var(--cream); opacity: 0.5; font-size: 14px; }
+  .tagline {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  /* badge Google TTS */
+  .tts-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(39,174,96,0.12);
+    border: 1px solid rgba(39,174,96,0.3);
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 9px;
+    color: #27ae60;
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+  }
+  .tts-badge::before { content: '●'; font-size: 7px; }
+
+  .power-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+  }
+  .power-label { display: flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); transition: all 0.3s; }
+  .status-dot.on { background: var(--green); box-shadow: 0 0 6px 1px rgba(39,174,96,0.5); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 6px 1px rgba(39,174,96,0.5)} 50%{box-shadow:0 0 10px 2px rgba(39,174,96,0.3)} }
+
+  .toggle { position: relative; width: 36px; height: 20px; cursor: pointer; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; transition: 0.25s; }
+  .slider::before { content:''; position:absolute; width:14px; height:14px; left:2px; top:2px; background:var(--muted); border-radius:50%; transition:0.25s; }
+  .toggle input:checked + .slider { background: var(--amber-dim); border-color: var(--amber); }
+  .toggle input:checked + .slider::before { transform: translateX(16px); background: var(--amber); }
+
+  .section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .section-title { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--amber-dim); margin-bottom: 10px; font-weight: 500; }
+
+  .control-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .control-row:last-child { margin-bottom: 0; }
+  .ctrl-label { width: 52px; font-size: 10px; color: var(--muted); flex-shrink: 0; letter-spacing: 0.05em; }
+
+  input[type=range] {
+    -webkit-appearance: none; flex: 1; height: 3px;
+    background: var(--bg3); border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
+    background: var(--amber); border: 2px solid var(--bg);
+    box-shadow: 0 0 4px rgba(232,160,32,0.4); transition: transform 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .ctrl-value { width: 30px; text-align: right; font-size: 10px; color: var(--amber); font-variant-numeric: tabular-nums; }
+
+  select {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+    color: var(--cream); font-family: 'DM Mono', monospace; font-size: 11px;
+    padding: 6px 24px 6px 8px; outline: none; cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6458'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+  }
+  select:focus { border-color: var(--amber-dim); }
+
+  textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+    color: var(--cream); font-family: 'DM Mono', monospace; font-size: 11px;
+    padding: 7px 9px; outline: none; resize: none; line-height: 1.5;
+  }
+  textarea:focus { border-color: var(--amber-dim); }
+
+  .hint { font-size: 9px; color: var(--muted); margin-top: 5px; line-height: 1.5; letter-spacing: 0.04em; }
+  .hint code { color: var(--amber); background: rgba(232,160,32,0.1); padding: 0 3px; border-radius: 2px; }
+
+  .inline-toggle { display: flex; align-items: center; justify-content: space-between; }
+  .inline-label { font-size: 11px; color: var(--cream); letter-spacing: 0.04em; }
+  .inline-sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+  .save-btn {
+    flex: 1;
+    padding: 7px 10px;
+    background: transparent;
+    border: 1px solid var(--amber-dim);
+    border-radius: 4px;
+    color: var(--amber);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .save-btn:hover { background: rgba(232,160,32,0.07); border-color: var(--amber); }
+  .save-btn.secondary { color: var(--muted); border-color: var(--border); }
+  .save-btn.secondary:hover { color: var(--cream); border-color: var(--muted); background: transparent; }
+
+  .test-btn {
+    display: flex; align-items: center; gap: 6px; width: 100%;
+    padding: 9px 12px; background: transparent; border: 1px solid var(--amber-dim);
+    border-radius: 4px; color: var(--amber); font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .test-btn:hover { background: rgba(232,160,32,0.07); border-color: var(--amber); }
+  .test-btn:active { transform: scale(0.98); }
+  .test-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .footer { padding: 10px 16px; text-align: center; color: var(--muted); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  body.disabled .section { opacity: 0.45; pointer-events: none; }
+  body.disabled .power-row { opacity: 1; pointer-events: all; }
+  body.disabled #saveTemplateBtn,
+  body.disabled #resetTemplateBtn,
+  body.disabled #templateInput { pointer-events: all !important; opacity: 1 !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Radio DJ <span>/</span> YouTube Music</div>
+  <div class="tagline">Giọng MC hoài niệm — nghe nhạc có hồn hơn</div>
+  <div class="tts-badge">Google TTS — hoạt động mọi máy</div>
+</div>
+
+<div class="power-row">
+  <div class="power-label">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Đang tắt</span>
+  </div>
+  <label class="toggle">
+    <input type="checkbox" id="enabledToggle">
+    <span class="slider"></span>
+  </label>
+</div>
+
+<!-- Giọng đọc -->
+<div class="section">
+  <div class="section-title">Giọng đọc</div>
+
+  <div class="control-row" style="margin-bottom:10px">
+    <div class="ctrl-label">Ngôn ngữ</div>
+    <select id="langSelect">
+      <option value="vi">🇻🇳 Tiếng Việt</option>
+      <option value="en">🇺🇸 English</option>
+      <option value="ja">🇯🇵 日本語</option>
+      <option value="ko">🇰🇷 한국어</option>
+      <option value="zh-CN">🇨🇳 中文(简体)</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="es">🇪🇸 Español</option>
+    </select>
+  </div>
+
+  <div class="control-row">
+    <div class="ctrl-label">Âm lượng</div>
+    <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1">
+    <div class="ctrl-value" id="volumeVal">100%</div>
+  </div>
+</div>
+
+<!-- Kịch bản MC -->
+<div class="section">
+  <div class="section-title">Kịch bản MC</div>
+  <textarea id="templateInput" rows="2" placeholder="Tiếp theo: {title} — {artist}"></textarea>
+  <div class="hint">
+    Dùng <code>{title}</code> cho tên bài, <code>{artist}</code> cho ca sĩ.<br>
+    Ví dụ: <em>"Và bây giờ, {title} của {artist}"</em>
+  </div>
+  <div style="display:flex; gap:8px; margin-top:8px;">
+    <button class="save-btn" id="saveTemplateBtn">💾 Lưu kịch bản</button>
+    <button class="save-btn secondary" id="resetTemplateBtn">↺ Mặc định</button>
+  </div>
+  <div id="saveStatus" style="font-size:10px; color:var(--green); margin-top:5px; min-height:14px;"></div>
+</div>
+
+<!-- Tạm dừng nhạc -->
+<div class="section">
+  <div class="inline-toggle">
+    <div>
+      <div class="inline-label">Tạm dừng nhạc khi đọc</div>
+      <div class="inline-sub">Đọc xong mới phát nhạc tiếp</div>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="pauseToggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+</div>
+
+<!-- Thử ngay -->
+<div class="section">
+  <button class="test-btn" id="testBtn">
+    <span>▶</span> Thử ngay
+  </button>
+</div>
+
+<div class="footer">v1.0 · Google TTS · Radio DJ for YouTube Music</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
